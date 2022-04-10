@@ -19,16 +19,16 @@ public class Messaging implements Closeable {
         this.executor = Executors.newCachedThreadPool();
     }
 
-    private void sendMessageInternal (final String recipient, final String channel, final String message) {
-        this.sendMessage("message:" + recipient, channel, message);
-    }
-
     public void sendMessage (final String client, final String channel, final String message) {
-        this.client.getResource().publish("message:" + RedisTo.client(client) + channel, message);
+        this.client.getResource().publish("message:client:" + client + ":" + channel, message);
     }
 
     public void sendMessageGroup (final String group, final String channel, final String message) {
-        this.client.getResource().publish("message:" + RedisTo.group(group) + channel, message);
+        this.client.getResource().publish("message:group:" + group + ":" + channel, message);
+    }
+
+    public void sendMessageAll (final String channel, final String message) {
+        this.client.getResource().publish("message:all:" + channel, message);
     }
 
 
@@ -51,11 +51,15 @@ public class Messaging implements Closeable {
     }
 
     public void send (final String client, final String channel, final Serializable object) {
-        this.sendInternal(RedisTo.client(client), channel, object);
+        this.sendInternal("client:" + client, channel, object);
     }
 
-    private void sendGroup (final String group, final String channel, final Serializable object) {
-        this.sendInternal(RedisTo.group(group), channel, object);
+    public void sendGroup (final String group, final String channel, final Serializable object) {
+        this.sendInternal("group:" + group, channel, object);
+    }
+
+    public void sendAll (final String channel, final Serializable object) {
+        this.sendInternal("all", channel, object);
     }
 
 
@@ -80,7 +84,7 @@ public class Messaging implements Closeable {
         });
         getExecutor().execute(() -> {
             try (Jedis jedis = getClient().getResource()) {
-                jedis.subscribe(jedisPubSub, "msg:all:?:" + channel);
+                jedis.subscribe(jedisPubSub, "msg:all:" + channel);
             }
         });
 

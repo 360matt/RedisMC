@@ -8,9 +8,9 @@ public class Exemple implements Serializable {
     public HashMap<String, String> b;
     public HashSet<String> c;
 
-    public Exemple(String id) {
+    public Exemple (String id) {
         this.a = 10;
-        this.b = new HashMap<String, String>();
-        this.c = new HashSet<String>();
+        this.b = new HashMap<>();
+        this.c = new HashSet<>();
     }
 }
