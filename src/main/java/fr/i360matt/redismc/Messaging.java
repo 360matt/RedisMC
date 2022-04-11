@@ -9,26 +9,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
-public class Messaging implements Closeable {
+public class Messaging {
 
-    private final RedisClient client;
-    private ExecutorService executor;
-
-    public Messaging (RedisClient redisClient) {
-        this.client = redisClient;
-        this.executor = Executors.newCachedThreadPool();
-    }
+    private static ExecutorService executor = Executors.newCachedThreadPool();
 
     public void sendMessage (final String client, final String channel, final String message) {
-        this.client.getResource().publish("message:client:" + client + ":" + channel, message);
+        RedisClient.getResource().publish("message:client:" + client + ":" + channel, message);
     }
 
     public void sendMessageGroup (final String group, final String channel, final String message) {
-        this.client.getResource().publish("message:group:" + group + ":" + channel, message);
+        RedisClient.getResource().publish("message:group:" + group + ":" + channel, message);
     }
 
     public void sendMessageAll (final String channel, final String message) {
-        this.client.getResource().publish("message:all:" + channel, message);
+        RedisClient.getResource().publish("message:all:" + channel, message);
     }
 
 
@@ -41,7 +35,7 @@ public class Messaging implements Closeable {
     private void sendInternal (final String recipient, final String channel, final Serializable object) {
         try (final ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(bos)) {
             out.writeUnshared(object);
-            try (Jedis jedis = getClient().getResource()) {
+            try (Jedis jedis = RedisClient.getResource()) {
                 String toSend = Base64.getEncoder().encodeToString(bos.toByteArray());
                 jedis.publish("obj:" + recipient + ":" + channel, toSend);
             }
@@ -73,17 +67,17 @@ public class Messaging implements Closeable {
         };
 
         getExecutor().execute(() -> {
-            try (Jedis jedis = getClient().getResource()) {
-                jedis.subscribe(jedisPubSub, "msg:client:" + this.client.getName() + ":" + channel);
+            try (Jedis jedis = RedisClient.getResource()) {
+                jedis.subscribe(jedisPubSub, "msg:client:" + RedisClient.getName() + ":" + channel);
             }
         });
         getExecutor().execute(() -> {
-            try (Jedis jedis = getClient().getResource()) {
-                jedis.subscribe(jedisPubSub, "msg:group:" + this.client.getGroup() + ":" + channel);
+            try (Jedis jedis = RedisClient.getResource()) {
+                jedis.subscribe(jedisPubSub, "msg:group:" + RedisClient.getGroup() + ":" + channel);
             }
         });
         getExecutor().execute(() -> {
-            try (Jedis jedis = getClient().getResource()) {
+            try (Jedis jedis = RedisClient.getResource()) {
                 jedis.subscribe(jedisPubSub, "msg:all:" + channel);
             }
         });
@@ -109,30 +103,26 @@ public class Messaging implements Closeable {
         };
 
         getExecutor().execute(() -> {
-            try (Jedis jedis = getClient().getResource()) {
-                jedis.subscribe(jedisPubSub, "obj:client:" + this.client.getName() + ":" + channel);
+            try (Jedis jedis = RedisClient.getResource()) {
+                jedis.subscribe(jedisPubSub, "obj:client:" + RedisClient.getName() + ":" + channel);
             }
         });
         getExecutor().execute(() -> {
-            try (Jedis jedis = getClient().getResource()) {
-                jedis.subscribe(jedisPubSub, "obj:group:" + this.client.getGroup() + ":" + channel);
+            try (Jedis jedis = RedisClient.getResource()) {
+                jedis.subscribe(jedisPubSub, "obj:group:" + RedisClient.getGroup() + ":" + channel);
             }
         });
         getExecutor().execute(() -> {
-            try (Jedis jedis = getClient().getResource()) {
+            try (Jedis jedis = RedisClient.getResource()) {
                 jedis.subscribe(jedisPubSub, "obj:all:?:" + channel);
             }
         });
     }
 
-    public RedisClient getClient () {
-        return this.client;
-    }
-
-    public void clearTasks () {
-        if (this.executor != null) {
-            this.executor.shutdownNow();
-            this.executor = Executors.newCachedThreadPool();
+    public static void clearTasks () {
+        if (executor != null) {
+            executor.shutdownNow();
+            executor = Executors.newCachedThreadPool();
         }
     }
 
@@ -140,8 +130,4 @@ public class Messaging implements Closeable {
         return executor;
     }
 
-    @Override
-    public void close() {
-        client.getPool().close();
-    }
 }

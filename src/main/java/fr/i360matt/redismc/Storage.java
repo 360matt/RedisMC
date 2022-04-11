@@ -1,51 +1,57 @@
 package fr.i360matt.redismc;
 
+import fr.i360matt.redismc.storage.RedisHashMap;
+import fr.i360matt.redismc.storage.RedisList;
+import fr.i360matt.redismc.utils.Serialization;
+
 import java.io.*;
-import java.util.Base64;
+import java.util.Set;
 
 public class Storage {
 
-    private final RedisClient client;
-    public Storage (RedisClient redisClient) {
-        this.client = redisClient;
+    public static void ttl (String key, int ms) {
+        RedisClient.getResource().pexpire(key, ms);
     }
 
-    public void set (final String key, final String value) {
-        client.getResource().set(key, value);
+    public static Set<String> getKeys (String path) {
+        return RedisClient.getResource().keys(path);
     }
 
-    public String get (final String key) {
-        return client.getResource().get(key);
+    public static void set (final String key, final String value) {
+        RedisClient.getResource().set(key, value);
     }
 
-    public void del (final String key) {
-        client.getResource().del(key);
+    public static String get (final String key) {
+        return RedisClient.getResource().get(key);
     }
 
-    public void set (final String key, final Serializable value) {
-        // convert object to byte array
-        try (final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             ObjectOutputStream out = new ObjectOutputStream(bos)) {
-            out.writeUnshared(value);
-            String toSave = Base64.getEncoder().encodeToString(bos.toByteArray());
-            client.getResource().set(key, toSave);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static void del (final String key) {
+        RedisClient.getResource().del(key);
     }
 
-    public <T extends Serializable> T get (final String key, Class<T> clazz) {
-        final String value = client.getResource().get(key);
+    public static void set (final String key, final Serializable value) {
+        String toSave = Serialization.serialize(value);
+        RedisClient.getResource().set(key, toSave);
+    }
+
+    public static void set (final String key, final Serializable value, final int ms) {
+        String toSave = Serialization.serialize(value);
+        RedisClient.getResource().psetex(key, ms, toSave);
+    }
+
+    public static <T extends Serializable> T get (final String key, Class<T> clazz) {
+        final String value = RedisClient.getResource().get(key);
         if (value == null)
             return null;
-        final byte[] bytes = Base64.getDecoder().decode(value);
+        return Serialization.deserialize(value);
+    }
 
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
-            return (T) in.readUnshared();
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return null;
+    public static  <T extends Serializable> RedisList<T> getList (final String key) {
+        return new RedisList<>(key);
+    }
+
+    public static <K extends Serializable, V extends Serializable> RedisHashMap<K, V> getMap (final String key) {
+        return new RedisHashMap<>(key);
     }
 
 }
