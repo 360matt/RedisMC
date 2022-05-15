@@ -13,15 +13,15 @@ public class Messaging {
 
     private static ExecutorService executor = Executors.newCachedThreadPool();
 
-    public void sendMessage (final String client, final String channel, final String message) {
+    public static void sendMessage (final String client, final String channel, final String message) {
         RedisClient.getResource().publish("message:client:" + client + ":" + channel, message);
     }
 
-    public void sendMessageGroup (final String group, final String channel, final String message) {
+    public static void sendMessageGroup (final String group, final String channel, final String message) {
         RedisClient.getResource().publish("message:group:" + group + ":" + channel, message);
     }
 
-    public void sendMessageAll (final String channel, final String message) {
+    public static void sendMessageAll (final String channel, final String message) {
         RedisClient.getResource().publish("message:all:" + channel, message);
     }
 
@@ -32,7 +32,7 @@ public class Messaging {
      * @param channel The channel to send to
      * @param object The object to send
      */
-    private void sendInternal (final String recipient, final String channel, final Serializable object) {
+    private static void sendInternal (final String recipient, final String channel, final Serializable object) {
         try (final ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(bos)) {
             out.writeUnshared(object);
             try (Jedis jedis = RedisClient.getResource()) {
@@ -44,21 +44,21 @@ public class Messaging {
         }
     }
 
-    public void send (final String client, final String channel, final Serializable object) {
-        this.sendInternal("client:" + client, channel, object);
+    public static void send (final String client, final String channel, final Serializable object) {
+        sendInternal("client:" + client, channel, object);
     }
 
-    public void sendGroup (final String group, final String channel, final Serializable object) {
-        this.sendInternal("group:" + group, channel, object);
+    public static void sendGroup (final String group, final String channel, final Serializable object) {
+        sendInternal("group:" + group, channel, object);
     }
 
-    public void sendAll (final String channel, final Serializable object) {
-        this.sendInternal("all", channel, object);
+    public static void sendAll (final String channel, final Serializable object) {
+        sendInternal("all", channel, object);
     }
 
 
 
-    public void onMessage (final String channel, final Consumer<String> listener) {
+    public static void onMessage (final String channel, final Consumer<String> listener) {
         JedisPubSub jedisPubSub = new JedisPubSub() {
             @Override
             public void onMessage(String channel, String message) {
@@ -89,7 +89,7 @@ public class Messaging {
      * @param channel The channel to listen to
      * @param listener The listener to call when a message is received
      */
-    public <T extends Serializable> void on (final String channel, Class<T> clazz, final Consumer<T> listener) {
+    public static <T extends Serializable> void on (final String channel, Class<T> clazz, final Consumer<T> listener) {
         JedisPubSub jedisPubSub = new JedisPubSub() {
             @Override
             public void onMessage(String channel, String message) {
@@ -126,7 +126,7 @@ public class Messaging {
         }
     }
 
-    public ExecutorService getExecutor() {
+    public static ExecutorService getExecutor() {
         return executor;
     }
 
