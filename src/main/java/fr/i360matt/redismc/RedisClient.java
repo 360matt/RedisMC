@@ -32,8 +32,8 @@ public class RedisClient {
         auth.accept(new RedisAuth());
     }
 
-    public static boolean isClosed () {
-        return instance == null || instance.pool.isClosed();
+    public static boolean isConnected () {
+        return instance != null && !instance.pool.isClosed();
     }
 
     public static void close () {
