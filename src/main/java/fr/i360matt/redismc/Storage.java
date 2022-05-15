@@ -3,9 +3,13 @@ package fr.i360matt.redismc;
 import fr.i360matt.redismc.storage.RedisHashMap;
 import fr.i360matt.redismc.storage.RedisList;
 import fr.i360matt.redismc.utils.Serialization;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class Storage {
 
@@ -39,19 +43,29 @@ public class Storage {
         RedisClient.getResource().psetex(key, ms, toSave);
     }
 
-    public static <T extends Serializable> T get (final String key, Class<T> clazz) {
+    public static <T extends Serializable> @Nullable T get (final String key, Class<T> clazz) {
         final String value = RedisClient.getResource().get(key);
         if (value == null)
             return null;
         return Serialization.deserialize(value);
     }
 
-    public static  <T extends Serializable> RedisList<T> getList (final String key) {
+    @Contract(value = "_ -> new", pure = true)
+    public static  <T extends Serializable> @NotNull RedisList<T> getList (final String key) {
         return new RedisList<>(key);
     }
 
-    public static <K extends Serializable, V extends Serializable> RedisHashMap<K, V> getMap (final String key) {
+    public static <V extends Serializable> void getList (final String key, final @NotNull Consumer<RedisList<V>> consumer) {
+        consumer.accept(new RedisList<V>(key));
+    }
+
+    @Contract(value = "_ -> new", pure = true)
+    public static <K extends Serializable, V extends Serializable> @NotNull RedisHashMap<K, V> getMap (final String key) {
         return new RedisHashMap<>(key);
+    }
+
+    public static <K extends Serializable, V extends Serializable> void getMap (final String key, final @NotNull Consumer<RedisHashMap<K, V>> consumer) {
+        consumer.accept(new RedisHashMap<>(key));
     }
 
 }
