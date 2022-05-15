@@ -32,6 +32,17 @@ public class RedisClient {
         auth.accept(new RedisAuth());
     }
 
+    public static boolean isClosed () {
+        return instance == null || instance.pool.isClosed();
+    }
+
+    public static void close () {
+        if (instance == null)
+            return;
+        instance.pool.close();
+        instance = null;
+    }
+
     public static String getGroup () {
         checkInstance();
         return instance.auth.getGroup();
