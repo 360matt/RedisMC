@@ -7,20 +7,17 @@ public class RedisAuth {
     private int port;
     private String password;
 
-    private String name;
-    private String group;
-
-    public RedisAuth() {
+    public RedisAuth () {
         // nothing
     }
 
-    public RedisAuth(String host, int port, String password) {
+    public RedisAuth (String host, int port, String password) {
         this.host = host;
         this.port = port;
         this.password = password;
     }
 
-    public RedisAuth(String host, int port) {
+    public RedisAuth (String host, int port) {
         this(host, port, null);
     }
 
@@ -36,14 +33,6 @@ public class RedisAuth {
         return password;
     }
 
-    public String getName () {
-        return name;
-    }
-
-    public String getGroup () {
-        return group;
-    }
-
     public void setHost (String host) {
         this.host = host;
     }
@@ -56,11 +45,4 @@ public class RedisAuth {
         this.password = password;
     }
 
-    public void setName (String name) {
-        this.name = name;
-    }
-
-    public void setGroup (String group) {
-        this.group = group;
-    }
 }

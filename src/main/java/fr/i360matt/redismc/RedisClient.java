@@ -29,7 +29,9 @@ public class RedisClient {
     }
 
     public static void create (final @NotNull Consumer<RedisAuth> auth) {
-        auth.accept(new RedisAuth());
+        RedisAuth x = new RedisAuth();
+        auth.accept(x);
+        create(x);
     }
 
     public static boolean isConnected () {
@@ -41,16 +43,6 @@ public class RedisClient {
             return;
         instance.pool.close();
         instance = null;
-    }
-
-    public static String getGroup () {
-        checkInstance();
-        return instance.auth.getGroup();
-    }
-
-    public static String getName() {
-        checkInstance();
-        return instance.auth.getName();
     }
 
     public static RedisAuth getConnection() {

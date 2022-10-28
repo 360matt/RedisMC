@@ -9,8 +9,6 @@ public class Test {
             auth.setHost("localhost");
             auth.setPort(6379);
             auth.setPassword("");
-            auth.setName("rouge");
-            auth.setGroup("couleur");
         });
 
         /*
